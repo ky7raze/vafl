@@ -1,1 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>𝖎𝖓𝖋𝖔 / 𝖇𝖎𝖔 𝖛𝖆𝖋𝖑𝖞𝖆</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('images/fon.mp4') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      position: relative;
+      overflow-x: hidden;
+    }
+    #sakura-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+      border-radius: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    h1, h2 {
+      background-color: black;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 6px;
+      margin-top: 0;
+      display: inline-block;
+    }
+    h1 {
+      vertical-align: middle;
+      flex-grow: 1;
+    }
+    .header-with-avatar {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .header-left-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .header-with-avatar img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid white;
+    }
+    #dynamic-status {
+      font-style: italic;
+      font-size: 0.95rem;
+      color: #cccccc;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      min-height: 1.4em;
+    }
+    #clock {
+      font-size: 1.2rem;
+      background-color: black;
+      padding: 10px 15px;
+      border-radius: 6px;
+      user-select: none;
+      min-width: 100px;
+      text-align: center;
+    }
+    p {
+      line-height: 1.5;
+    }
+    a {
+      color: #a0cfff;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      .container {
+        margin: 20px 10px;
+        padding: 20px;
+      }
+      h1, h2 {
+        padding: 10px 15px;
+        font-size: 1.3rem;
+      }
+      .header-with-avatar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      #clock {
+        margin-top: 10px;
+        min-width: auto;
+        width: 100%;
+      }
+    }
+    #toggle-music {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 15px;
+      font-size: 14px;
+      background-color: rgba(0,0,0,0.7);
+      color: white;
+      border: 1px solid white;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 9999;
+    }
+    #volume-control {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background-color: rgba(0,0,0,0.7);
+      padding: 8px 12px;
+      border: 1px solid white;
+      border-radius: 4px;
+      color: white;
+      font-size: 14px;
+      z-index: 9999;
+      width: 150px;
+      text-align: center;
+    }
+    #volume-control label {
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="sakura-canvas"></canvas>
 
+  <div class="container">
+    <div class="header-with-avatar">
+      <div class="header-left">
+        <div class="header-left-row">
+          <img src="images/ava-vaf.jpg" alt="Avatar" />
+          <h1>𝖛𝖆𝖋𝖑𝖞𝖆</h1>
+        </div>
+        <p id="dynamic-status">♪ Загрузка...</p>
+      </div>
+      <div id="clock">00:00:00</div>
+    </div>
+
+    <div class="section about-me">
+      <h2>𝕬𝖇𝖔𝖚𝖙 𝖒𝖊</h2>
+      <p>➳❗️ 𝕹𝖆𝖒𝖊 - 𝖛𝖆𝖋𝖑𝖞𝖆</p>
+    </div>
+  </div>
+
+  <audio id="bg-music" loop>
+    <source src="" type="audio/mpeg" />
+  </audio>
+
+  <button id="toggle-music">🎵 Music: off</button>
+
+  <div id="volume-control">
+    <label for="volume">Volume</label><br />
+    <input id="volume" type="range" min="0" max="1" step="0.01" value="0.3" />
+  </div>
+
+  <script>
+    const audio = document.getElementById('bg-music');
+    const btn = document.getElementById('toggle-music');
+    const volumeSlider = document.getElementById('volume');
+    const statusElement = document.getElementById('dynamic-status');
+
+    let playing = false;
+    let userPaused = false;
+
+    // === Добавлено: Web Audio API для iOS ===
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+    const track = audioCtx.createMediaElementSource(audio);
+    const gainNode = audioCtx.createGain();
+
+    track.connect(gainNode).connect(audioCtx.destination);
+    gainNode.gain.value = 0.3; // стартовое значение
+
+    // === запуск аудио при первом клике ===
+    function startAudio() {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      audio.play().then(() => {
+        playing = true;
+        userPaused = false;
+        btn.textContent = '🎵 Music: on';
+      }).catch(() => {});
+      document.removeEventListener('click', startAudio);
+    }
+    document.addEventListener('click', startAudio);
+
+    btn.addEventListener('click', () => {
+      if (playing) {
+        audio.pause();
+        btn.textContent = '🎵 Music: off';
+        playing = false;
+        userPaused = true;
+      } else {
+        audio.play().then(() => {
+          btn.textContent = '🎵 Music: on';
+          playing = true;
+          userPaused = false;
+        }).catch(() => {});
+      }
+    });
+
+    // === ползунок управляет gainNode ===
+    volumeSlider.addEventListener('input', () => {
+      gainNode.gain.value = volumeSlider.value;
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        if (playing) audio.pause();
+      } else {
+        if (playing && !userPaused) audio.play();
+      }
+    });
+
+    // Часы
+    function updateClock() {
+      const clock = document.getElementById('clock');
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      clock.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Сакура анимация (без изменений)
+    const canvas = document.getElementById('sakura-canvas');
+    const ctx = canvas.getContext('2d');
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    canvas.width = W;
+    canvas.height = H;
+
+    class SakuraPetal {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * W;
+        this.y = Math.random() * H - H;
+        this.size = 8 + Math.random() * 7;
+        this.speed = 1 + Math.random() * 1.5;
+        this.angle = Math.random() * 2 * Math.PI;
+        this.angularSpeed = 0.01 + Math.random() * 0.02;
+        this.opacity = 0.5 + Math.random() * 0.5;
+      }
+      update() {
+        this.y += this.speed;
+        this.angle += this.angularSpeed;
+        if (this.y > H) this.reset();
+      }
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        let grad = ctx.createRadialGradient(0, 0, this.size * 0.1, 0, 0, this.size);
+        grad.addColorStop(0, `rgba(255,182,193,${this.opacity})`);
+        grad.addColorStop(1, `rgba(255,105,180,0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size * 0.7, this.size * 1.2, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    const petals = Array.from({length: 60}, () => new SakuraPetal());
+    function animate() {
+      ctx.clearRect(0, 0, W, H);
+      petals.forEach(p => { p.update(); p.draw(ctx); });
+      requestAnimationFrame(animate);
+    }
+    animate();
+    window.addEventListener('resize', () => {
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = W; canvas.height = H;
+    });
+
+   const statusLines = [ "-",
+ "Я не устану тянуть время","Не устану падать","Пока не услышу шум твоих шагов",
+  "Я думал так и представлял тебя со мною рядом","А оказалось что ошибиться мог",
+  "Но это не нужно мне нахуй","Но хотел вернуть всё обратно","Но эти обиженные взгляды",
+  "Заставляют думать зачем это надо","Зачем это надо, зачем это надо","Зачем это надо, зачем это надо",
+  "Я говорил что не устану, но устал","Мне кажется жизнь расставит всё сама по местам",
+  "А ты сейчас где-то там, ты где-то там","С кем-то там, с трепетом к нему, с трепетом",
+  "Ммм, как же я заебался, думать о шансе","Этом последнем шансе","Ммм, кто-то из нас не старался, не пошевелил пальцем",
+  "Не пошевелил пальцем","Кто же это был, сейчас решим","Это тот кричал кто из всех сил",
+  "Те самые слова те самые строчки","А после говорил, что это не нарочно","Это не нарочно, это не нарочно",
+  "Это не нарочно, это не нарочно","Я не устану тянуть время","Не устану падать","Пока не услышу шум твоих шагов",
+  "Я думал так и представлял тебя со мною рядом","А оказалось что ошибиться мог","Но это не нужно мне нахуй",
+  "Но хотел вернуть всё обратно","Но эти обиженные взгляды","Заставляют думать зачем это надо","-"
+];
+
+const statusTimings = [
+  0,11,13,15,18,21,23,26,30,33,36,42,48,51,54,56,60,65,67,70,
+  73,76,78,81,82,90,95,98,100,102,105,108,110,114,116,120
+];
+
+    let lastStatusIndex = -1;
+
+    function updateStatusByTime(currentTime) {
+      let index = 0;
+      for (let i = 0; i < statusTimings.length; i++) {
+        if (currentTime >= statusTimings[i]) {
+          index = i;
+        } else {
+          break;
+        }
+      }
+      if (index !== lastStatusIndex) {
+        lastStatusIndex = index;
+        statusElement.style.opacity = 0;
+        setTimeout(() => {
+          statusElement.textContent = `♪ ${statusLines[index]}`;
+          statusElement.style.opacity = 1;
+        }, 300);
+      }
+    }
+
+    setInterval(() => {
+      if (!audio.paused) {
+        updateStatusByTime(audio.currentTime);
+      }
+    }, 500);
+
+    statusElement.textContent = `♪ ${statusLines[0]}`;
+    statusElement.style.opacity = 1;
+  </script>
+</body>
+</html>
