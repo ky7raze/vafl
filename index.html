@@ -11,17 +11,10 @@
       color: white;
       position: relative;
       overflow-x: hidden;
+      background: url("images/fonq.gif") no-repeat center center fixed;
+      background-size: cover;
     }
-    /* Видео фон */
-    #bg-video {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: -2;
-    }
+
     #sakura-canvas {
       position: fixed;
       top: 0; left: 0;
@@ -29,6 +22,7 @@
       pointer-events: none;
       z-index: -1;
     }
+
     .container {
       max-width: 900px;
       margin: 40px auto;
@@ -39,6 +33,7 @@
       position: relative;
       z-index: 1;
     }
+
     h1, h2 {
       background-color: black;
       color: white;
@@ -47,10 +42,12 @@
       margin-top: 0;
       display: inline-block;
     }
+
     h1 {
       vertical-align: middle;
       flex-grow: 1;
     }
+
     .header-with-avatar {
       display: flex;
       align-items: center;
@@ -59,16 +56,19 @@
       flex-wrap: wrap;
       justify-content: space-between;
     }
+
     .header-left {
       display: flex;
       flex-direction: column;
       gap: 5px;
     }
+
     .header-left-row {
       display: flex;
       align-items: center;
       gap: 15px;
     }
+
     .header-with-avatar img {
       width: 60px;
       height: 60px;
@@ -76,6 +76,7 @@
       object-fit: cover;
       border: 2px solid white;
     }
+
     #dynamic-status {
       font-style: italic;
       font-size: 0.95rem;
@@ -84,6 +85,7 @@
       transition: opacity 0.5s ease;
       min-height: 1.4em;
     }
+
     #clock {
       font-size: 1.2rem;
       background-color: black;
@@ -93,16 +95,20 @@
       min-width: 100px;
       text-align: center;
     }
+
     p {
       line-height: 1.5;
     }
+
     a {
       color: #a0cfff;
       text-decoration: none;
     }
+
     a:hover {
       text-decoration: underline;
     }
+
     @media (max-width: 600px) {
       .container {
         margin: 20px 10px;
@@ -122,6 +128,7 @@
         width: 100%;
       }
     }
+
     #toggle-music {
       position: fixed;
       bottom: 20px;
@@ -135,6 +142,7 @@
       cursor: pointer;
       z-index: 9999;
     }
+
     #volume-control {
       position: fixed;
       bottom: 70px;
@@ -149,17 +157,13 @@
       width: 150px;
       text-align: center;
     }
+
     #volume-control label {
       font-size: 13px;
     }
   </style>
 </head>
 <body>
-  <!-- Видео фон -->
-  <video autoplay muted loop playsinline id="bg-video">
-    <source src="images/fon.mp4" type="video/mp4">
-    Ваш браузер не поддерживает видео фон.
-  </video>
   <canvas id="sakura-canvas"></canvas>
 
   <div class="container">
@@ -204,18 +208,15 @@
 
     let playing = false;
     let userPaused = false;
-
     audio.volume = 0.3;
 
-    // Запуск аудио при первом клике по странице (требование браузеров)
+    // старт музыки по клику
     function startAudio() {
       audio.play().then(() => {
         playing = true;
         userPaused = false;
         btn.textContent = '🎵 Music: on';
-      }).catch(() => {
-        // Ошибка воспроизведения, ничего не делаем
-      });
+      }).catch(() => {});
       document.removeEventListener('click', startAudio);
     }
     document.addEventListener('click', startAudio);
@@ -259,7 +260,7 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Сакура анимация
+    // Сакура (белые лепестки)
     const canvas = document.getElementById('sakura-canvas');
     const ctx = canvas.getContext('2d');
     let W = window.innerWidth;
@@ -288,8 +289,8 @@
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
         let grad = ctx.createRadialGradient(0, 0, this.size * 0.1, 0, 0, this.size);
-        grad.addColorStop(0, `rgba(255,182,193,${this.opacity})`);
-        grad.addColorStop(1, `rgba(255,105,180,0)`);
+        grad.addColorStop(0, `rgba(255,255,255,${this.opacity})`);
+        grad.addColorStop(1, `rgba(255,255,255,0)`);
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.ellipse(0, 0, this.size * 0.7, this.size * 1.2, 0, 0, 2 * Math.PI);
@@ -310,6 +311,7 @@
       canvas.width = W; canvas.height = H;
     });
 
+    // Статус с текстом
     const statusLines = ["-",
 "Я выйду в окна, чтобы разбиться дождём",
 "Сегодня будет влажно, сухость подождёт",
@@ -334,21 +336,14 @@
 "-",
 ];
 
-    const statusTimings = [
-      0,13,17,21,25,29,32,35,39,42,46,50,53,56,60,64,67,
-  71,74,78,81,86
-    ];
-
+    const statusTimings = [0,13,17,21,25,29,32,35,39,42,46,50,53,56,60,64,67,71,74,78,81,86];
     let lastStatusIndex = -1;
 
     function updateStatusByTime(currentTime) {
       let index = 0;
       for (let i = 0; i < statusTimings.length; i++) {
-        if (currentTime >= statusTimings[i]) {
-          index = i;
-        } else {
-          break;
-        }
+        if (currentTime >= statusTimings[i]) index = i;
+        else break;
       }
       if (index !== lastStatusIndex) {
         lastStatusIndex = index;
@@ -366,10 +361,8 @@
       }
     }, 500);
 
-    // Показываем первую строку сразу
     statusElement.textContent = `♪ ${statusLines[0]}`;
     statusElement.style.opacity = 1;
   </script>
 </body>
 </html>
-
